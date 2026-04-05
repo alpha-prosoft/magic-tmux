@@ -78,6 +78,41 @@ install_plugins() {
   info "All plugins installed"
 }
 
+# -- Install Nerd Font -----------------------------------------------------
+
+NERD_FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/UbuntuSans.zip"
+NERD_FONT_DIR="$HOME/.local/share/fonts/NerdFonts"
+
+install_nerd_font() {
+  if fc-list | grep -qi "UbuntuSans Nerd Font"; then
+    info "UbuntuSans Nerd Font already installed"
+    return
+  fi
+
+  info "Installing UbuntuSans Nerd Font ..."
+  local tmp
+  tmp=$(mktemp -d)
+  curl -fsSL "$NERD_FONT_URL" -o "$tmp/UbuntuSans.zip"
+  mkdir -p "$NERD_FONT_DIR"
+  unzip -q "$tmp/UbuntuSans.zip" -d "$NERD_FONT_DIR"
+  rm -rf "$tmp"
+  fc-cache -f "$NERD_FONT_DIR"
+  info "UbuntuSans Nerd Font installed"
+}
+
+# -- Configure terminal font -----------------------------------------------
+
+configure_terminal_font() {
+  if ! gsettings list-schemas 2>/dev/null | grep -q "org.gnome.Ptyxis"; then
+    info "Ptyxis not found; skipping terminal font configuration"
+    return
+  fi
+  info "Configuring Ptyxis font ..."
+  gsettings set org.gnome.Ptyxis use-system-font false
+  gsettings set org.gnome.Ptyxis font-name "UbuntuSansMono Nerd Font Mono 13"
+  info "Ptyxis font set to 'UbuntuSansMono Nerd Font Mono 13'"
+}
+
 # -- Reload tmux config ----------------------------------------------------
 # Sources tmux.conf into the running server to flush stale hooks.
 
@@ -120,6 +155,8 @@ main() {
   install_tmux
   fix_permissions
   install_plugins
+  install_nerd_font
+  configure_terminal_font
   configure_shell
   reload_tmux_config
   echo
