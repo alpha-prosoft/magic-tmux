@@ -28,17 +28,30 @@ install_tmux() {
   info "tmux installed ($(tmux -V))"
 }
 
-# -- Install TPM -----------------------------------------------------------
+# -- Fix script permissions ------------------------------------------------
+
+fix_permissions() {
+  info "Fixing script permissions ..."
+  chmod +x "$SCRIPT_DIR/scripts/"*.sh
+  chmod +x "$SCRIPT_DIR/shell-init.bash"
+  info "Permissions fixed"
+}
+
+# -- Install TPM and plugins -----------------------------------------------
 
 install_tpm() {
   local tpm_dir="$SCRIPT_DIR/plugins/tpm"
   if [ -d "$tpm_dir" ]; then
     info "TPM already installed"
-    return
+  else
+    info "Installing TPM ..."
+    git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
+    info "TPM installed"
   fi
-  info "Installing TPM ..."
-  git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
-  info "TPM installed"
+
+  info "Installing tmux plugins via TPM ..."
+  "$tpm_dir/bin/install_plugins"
+  info "Plugins installed"
 }
 
 # -- Shell config ----------------------------------------------------------
@@ -68,12 +81,12 @@ main() {
   info "=== tmux setup ==="
   echo
   install_tmux
+  fix_permissions
   install_tpm
   configure_shell
   echo
   info "=== Setup complete ==="
   info "Restart your shell or run:  source $BASHRC"
-  info "Then inside tmux press prefix + I to install plugins via TPM."
 }
 
 main "$@"
