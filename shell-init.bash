@@ -9,3 +9,6 @@ export TMUX_PLUGIN_MANAGER_PATH="$TMUX_CONFIG_DIR/plugins"
 if command -v tmux &>/dev/null && [ -z "${TMUX-}" ]; then
   exec tmux new-session
 fi
+
+# Shell integration (PROMPT_COMMAND hook for window naming)
+source "$TMUX_CONFIG_DIR/scripts/tmux-shell-integration.sh"
