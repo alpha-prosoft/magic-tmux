@@ -55,17 +55,19 @@ install_plugin() {
   local dir="$SCRIPT_DIR/plugins/$name"
 
   # Skip if already populated
-  if [ -d "$dir/.git" ]; then
+  if [ -d "$dir" ]; then
     info "Plugin $name already installed"
     return
   fi
 
   rm -rf "$dir"
   info "Installing plugin $name ..."
-  git clone "https://github.com/$repo" "$dir"
+  git clone --quiet "https://github.com/$repo" "$dir"
   if [ -n "$ref" ]; then
     git -C "$dir" checkout "$ref" --quiet
   fi
+  # Drop the .git dir — we only need the files, not the git history.
+  rm -rf "$dir/.git"
 }
 
 install_plugins() {
@@ -74,6 +76,19 @@ install_plugins() {
     install_plugin "$spec"
   done
   info "All plugins installed"
+}
+
+# -- Reload tmux config ----------------------------------------------------
+# Sources tmux.conf into the running server to flush stale hooks.
+
+reload_tmux_config() {
+  if [ -z "${TMUX-}" ]; then
+    info "Not inside a tmux session; skipping config reload"
+    return
+  fi
+  info "Reloading tmux config ..."
+  tmux source-file "$SCRIPT_DIR/tmux.conf"
+  info "tmux config reloaded"
 }
 
 # -- Shell config ----------------------------------------------------------
@@ -106,6 +121,7 @@ main() {
   fix_permissions
   install_plugins
   configure_shell
+  reload_tmux_config
   echo
   info "=== Setup complete ==="
   info "Restart your shell or run:  source $BASHRC"
