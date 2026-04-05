@@ -41,10 +41,11 @@ fix_permissions() {
 
 install_tpm() {
   local tpm_dir="$SCRIPT_DIR/plugins/tpm"
-  if [ -d "$tpm_dir" ]; then
+  if [ -x "$tpm_dir/bin/install_plugins" ]; then
     info "TPM already installed"
   else
     info "Installing TPM ..."
+    rm -rf "$tpm_dir"
     git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
     info "TPM installed"
   fi
