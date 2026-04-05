@@ -39,20 +39,41 @@ fix_permissions() {
 
 # -- Install TPM and plugins -----------------------------------------------
 
-install_tpm() {
-  local tpm_dir="$SCRIPT_DIR/plugins/tpm"
-  if [ -x "$tpm_dir/bin/install_plugins" ]; then
-    info "TPM already installed"
-  else
-    info "Installing TPM ..."
-    rm -rf "$tpm_dir"
-    git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
-    info "TPM installed"
+PLUGINS=(
+  "tmux-plugins/tpm"
+  "tmux-plugins/tmux-sensible"
+  "christoomey/vim-tmux-navigator"
+  "catppuccin/tmux#v2.1.1"
+)
+
+install_plugin() {
+  local spec="$1"
+  local repo="${spec%%#*}"
+  local ref="${spec#*#}"
+  [ "$ref" = "$spec" ] && ref=""
+  local name="${repo##*/}"
+  local dir="$SCRIPT_DIR/plugins/$name"
+
+  # Skip if already populated
+  if [ -d "$dir/.git" ]; then
+    info "Plugin $name already installed"
+    return
   fi
 
-  info "Installing tmux plugins via TPM ..."
-  "$tpm_dir/bin/install_plugins"
-  info "Plugins installed"
+  rm -rf "$dir"
+  info "Installing plugin $name ..."
+  git clone "https://github.com/$repo" "$dir"
+  if [ -n "$ref" ]; then
+    git -C "$dir" checkout "$ref" --quiet
+  fi
+}
+
+install_plugins() {
+  mkdir -p "$SCRIPT_DIR/plugins"
+  for spec in "${PLUGINS[@]}"; do
+    install_plugin "$spec"
+  done
+  info "All plugins installed"
 }
 
 # -- Shell config ----------------------------------------------------------
@@ -83,7 +104,7 @@ main() {
   echo
   install_tmux
   fix_permissions
-  install_tpm
+  install_plugins
   configure_shell
   echo
   info "=== Setup complete ==="
